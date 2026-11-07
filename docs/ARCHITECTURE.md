@@ -1,30 +1,34 @@
 # Architecture
 
-## Overview
+## System Architecture
 
-`@trysac/consent-banner-lite` is a small, dependency-free TypeScript library published to npm as ES modules with type
-declarations. Tracking-free cookie consent core for the browser: opt-in by default, equal accept and reject buttons, accessible static markup and an exact cookie format
+`@trysac/consent-banner-lite` is designed as a standalone, zero-dependency client-side library for managing consent preferences.
 
-## Modules
+### Components
 
-| Module | Responsibility |
-|---|---|
-| `src/index.ts` | Public API. Everything consumers import is exported from here. |
+1. **ConsentManager (`createConsentManager`)**:
+   - Manages consent states (`Record<string, boolean>`).
+   - Treats `necessary` as always `true` and implicit.
+   - Checks for consent expiry (`maxAgeSeconds`, default 180 days) and policy version changes.
+   - Encodes and parses persistence records.
+   - Notifies subscribers via `onChange`.
 
-Add a row when you add a module. Internal modules are not re-exported unless they are part of the public API.
+2. **Storage Adapters (`StoragePort`)**:
+   - `memoryStorage()`: In-memory store for server-side environments or testing.
+   - `cookieStorage(doc, name)`: First-party cookie storage targeting browser environments (`Path=/; Max-Age=15552000; SameSite=Lax; Secure`).
 
-## Boundaries
+3. **Banner Renderer (`renderBanner`)**:
+   - Pure function returning HTML strings with WAI-ARIA dialog attributes.
+   - Escapes HTML entities (`&`, `<`, `>`, `"`, `'`) in titles, descriptions, and category labels.
+   - Presents symmetric "Accept all" and "Reject all" actions alongside a customizable category panel.
 
-- No runtime dependencies by default; any addition is justified in [STACK.md](STACK.md).
-- No I/O at import time. Functions are pure unless their documentation says otherwise.
-- Errors are thrown as built-in error types (`TypeError`, `RangeError`) with actionable messages.
+## Stored Format Specification
 
-## Build and distribution
+Format string:
+```
+v1|<policyVersion>|<epoch_seconds>|<cat1>=<0|1>,<cat2>=<0|1>...
+```
 
-`npm run build` compiles `src/` to `dist/` with `tsconfig.build.json`. Only `dist/` is published
-(`files` in `package.json`).
-
-## Decisions
-
-Architectural decisions are recorded in [decisions/](decisions/), starting with
-[0001](decisions/0001-record-architecture-decisions.md).
+- Prefix: `v1`
+- Categories are serialized strictly in the order defined in `ConsentConfig.categories`.
+- Any parsing failure, unknown version prefix, corrupted epoch, or category set mismatch causes `needsPrompt()` to return `true` and `get()` to return safe defaults (all categories disabled except `necessary`).

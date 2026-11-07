@@ -1,28 +1,14 @@
-# Testing
+# Testing Strategy
 
-## Tools
+## Overview
 
-- [Vitest](https://vitest.dev/) runs the suites in `test/`.
-- Coverage is collected with V8 (`@vitest/coverage-v8`) over `src/`.
+All tests are executed via `vitest` in an isolated environment without network access. They cover core logic, serialization, accessibility, and validation.
 
-## Commands
+## Test Files
 
-```sh
-npm test            # vitest run --coverage
-npx vitest          # watch mode while developing
-npm run check       # every gate, including tests
-```
-
-## Rules
-
-- Coverage must stay at or above 80 % for lines, branches, functions and statements (`vitest.config.ts`).
-  Lowering the thresholds is not allowed.
-- Test through the public entry point (`src/index.ts`) and assert observable behavior: return values,
-  thrown errors and their messages.
-- Each bug fix adds a test that fails without the fix.
-- Tests are deterministic: no network, no real clock or randomness without injection, no shared state between
-  tests. Temporary files go to the OS temp directory and are removed by the test.
-
-## Reports
-
-Coverage reports are written to `coverage/` (text summary and `lcov`). The folder is ignored by git.
+- `test/index.test.ts`: Covers the entirety of the library's functionality, including:
+    - `createConsentManager & storage`: Validates `needsPrompt()`, `acceptAll()`, `rejectAll()`, `save()`, and default consent values.
+    - `Validation errors in createConsentManager`: Asserts that `ConsentBannerError` is thrown for invalid configs, duplicate categories, invalid policy versions, or incorrect storage implementations.
+    - `cookieStorage`: Verifies cookie string construction, proper escaping, and retrieval logic, including edge cases like multiple cookies.
+    - `renderBanner`: Checks for accessibility features (`role="dialog"`, `aria-labelledby`), correct markup for buttons, and HTML escaping of labels.
+    - `Edge cases in stored record parsing`: Confirms graceful recovery from truncated, malformed, or mismatched stored data.
