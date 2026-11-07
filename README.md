@@ -1,55 +1,42 @@
-# consent-banner-lite
+# @trysac/consent-banner-lite
 
-[![npm version](https://img.shields.io/npm/v/@trysac/consent-banner-lite.svg)](https://www.npmjs.com/package/@trysac/consent-banner-lite)
-[![license: MIT](https://img.shields.io/npm/l/@trysac/consent-banner-lite.svg)](LICENSE)
-[![CI](https://github.com/Trysac/u189-consent-banner-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u189-consent-banner-lite/actions/workflows/ci.yml)
+Tracking-free cookie consent core for the browser: opt-in by default, equal accept and reject buttons, accessible static markup, and an exact cookie format.
 
-Tracking-free cookie consent core for the browser: opt-in by default, equal accept and reject buttons, accessible static markup and an exact cookie format
+[![Build Status](https://github.com/Trysac/u189-consent-banner-lite/workflows/ci/badge.svg)](https://github.com/Trysac/u189-consent-banner-lite/actions)
 
-## Problem
+## The Problem
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and why existing
-packages do not solve it well. Keep it factual; link to an issue or decision record when there is one.
+Most cookie banners are third-party scripts that track the visitor before consent, hide the reject option, and are not keyboard or screen reader friendly. Small sites only need to remember a few categories and render an honest choice. This library provides the consent state, its storage format, and accessible banner markup without any network access. It is a technical aid, not legal advice.
 
-## Install
+## Installation
 
-```sh
+```bash
 npm install @trysac/consent-banner-lite
 ```
 
-Requires Node.js 20 or newer. The package ships ES modules with TypeScript declarations.
+## Usage Example
 
-## Usage
-
-```ts
-import { greet } from "@trysac/consent-banner-lite";
-
-// Build a greeting; surrounding whitespace is ignored.
-const message = greet("  Ada ");
-console.log(message); // "Hello, Ada!"
-
-try {
-  greet("   ");
-} catch (error) {
-  console.error((error as Error).message); // "name must not be empty"
+```typescript
+import { createConsentManager, cookieStorage, renderBanner } from "@trysac/consent-banner-lite";
+const manager = createConsentManager({ categories: ["analytics"], policyVersion: "2026-01-01", storage: cookieStorage(document) });
+if (manager.needsPrompt()) {
+  document.body.insertAdjacentHTML("beforeend", renderBanner({ categories: [{ id: "analytics", label: "Analytics" }] }));
 }
+manager.onChange((c) => { if (c.analytics) console.log("Analytics allowed"); });
 ```
 
-## API
+## Public API Summary
 
-| Export | Signature | Description |
-|---|---|---|
-| `greet` | `(name: string) => string` | Placeholder API; replace it with the real one. |
+- `createConsentManager(config: ConsentConfig): ConsentManager`: Initializes state management.
+- `ConsentConfig`: Requires `categories` (regex `/^[a-z][a-z0-9_]{0,31}$/`, max 10, 'necessary' is implicit), `policyVersion` (regex `/^[A-Za-z0-9.-]{1,32}$/`), and `storage` (StoragePort). Optional `now` (epoch ms) and `maxAgeSeconds` (default 15,552,000).
+- `ConsentManager`: Methods `get()`, `needsPrompt()`, `acceptAll()`, `rejectAll()`, `save(choices)`, `onChange(listener)`.
+- `cookieStorage(doc, name?)`: Browser-compatible storage.
+- `memoryStorage()`: In-memory storage.
+- `renderBanner(config)`: Returns HTML string.
+- `ConsentBannerError`: Thrown for `INVALID_CONFIG` or `UNKNOWN_CATEGORY`.
 
-## Development
+## Why not existing CMPs?
 
-```sh
-npm install
-npm run check   # lint, format, types, tests with coverage, docs, secrets
-```
+Unlike hosted CMPs, this library has no third-party dependencies, performs no tracking, and is tiny enough to be fully testable without external network calls.
 
-See [AGENTS.md](AGENTS.md) for the full command list and [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
-
-## License
-
-[MIT](LICENSE) © 2026 Miguel Gomez
+See [docs/SECURITY.md](docs/SECURITY.md) for security details.
