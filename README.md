@@ -10,9 +10,15 @@ Most cookie banners are third-party scripts that track the visitor before consen
 
 ## Installation
 
-```bash
-npm install @trysac/consent-banner-lite
+Not published to npm yet. Build it from a clone, then install it from the local path:
+
+```sh
+git clone https://github.com/Trysac/u189-consent-banner-lite.git
+cd u189-consent-banner-lite && npm ci && npm run build
+cd ../your-project && npm install ../u189-consent-banner-lite
 ```
+
+Imports keep the package name: `import { ... } from "@trysac/consent-banner-lite"`.
 
 ## Usage Example
 
